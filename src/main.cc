@@ -37,90 +37,17 @@ do_flush()
   return 0;
 }
 
-
 int
-main( int argc, char **argv )
+check_cache_info() 
 {
-	int retval, i, j;
-	int EventSet = PAPI_NULL;
-	long long values[2];
 	const PAPI_hw_info_t *hwinfo = NULL;
-	char descr[PAPI_MAX_STR_LEN];
-	PAPI_event_info_t evinfo;
 	PAPI_mh_level_t *L;
-
-
-	const int eventlist[] = {
-		PAPI_L1_DCA,
-		PAPI_L1_DCM,
-		PAPI_L1_DCH,
-		PAPI_L2_DCA,
-		PAPI_L2_DCM,
-		PAPI_L2_DCH,
-#if 0
-		PAPI_L1_LDM,
-		PAPI_L1_STM,
-		PAPI_L1_DCR,
-		PAPI_L1_DCW,
-		PAPI_L1_ICM,
-		PAPI_L1_TCM,
-		PAPI_LD_INS,
-		PAPI_SR_INS,
-		PAPI_LST_INS,
-		PAPI_L2_DCR,
-		PAPI_L2_DCW,
-		PAPI_CSR_TOT,
-		PAPI_MEM_SCY,
-		PAPI_MEM_RCY,
-		PAPI_MEM_WCY,
-		PAPI_L1_ICH,
-		PAPI_L1_ICA,
-		PAPI_L1_ICR,
-		PAPI_L1_ICW,
-		PAPI_L1_TCH,
-		PAPI_L1_TCA,
-		PAPI_L1_TCR,
-		PAPI_L1_TCW,
-		PAPI_L2_DCM,
-		PAPI_L2_ICM,
-		PAPI_L2_TCM,
-		PAPI_L2_LDM,
-		PAPI_L2_STM,
-		PAPI_L2_DCH,
-		PAPI_L2_DCA,
-		PAPI_L2_DCR,
-		PAPI_L2_DCW,
-		PAPI_L2_ICH,
-		PAPI_L2_ICA,
-		PAPI_L2_ICR,
-		PAPI_L2_ICW,
-		PAPI_L2_TCH,
-		PAPI_L2_TCA,
-		PAPI_L2_TCR,
-		PAPI_L2_TCW,
-#endif
-		0
-	};
-
-	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
-
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
-        {
-          printf("Error in file: %s, line %d, method %s, return %d\n", 
-		 __FILE__, __LINE__, "PAPI_library_init", retval );
-        }
+        int i,j;
 
 	if ( ( hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
           printf("Error in file: %s, line %d, method %s, return %d\n", 
 		 __FILE__, __LINE__, "PAPI_get_hardware_info", 2 );
 	}
-
-	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
-        {
-          printf("Error in file: %s, line %d, method %s, return %d\n", 
-		 __FILE__, __LINE__, "PAPI_create_eventset", retval );
-        }
 
 	/* Extract and report the cache information */
 	L = ( PAPI_mh_level_t * ) ( hwinfo->mem_hierarchy.level );
@@ -187,6 +114,89 @@ main( int argc, char **argv )
 			}
 		}
 	}
+
+  return 0;
+}
+
+int
+main( int argc, char **argv )
+{
+	int retval, i, j;
+	int EventSet = PAPI_NULL;
+	long long values[2];
+	char descr[PAPI_MAX_STR_LEN];
+	PAPI_event_info_t evinfo;
+
+
+	const int eventlist[] = {
+		PAPI_L1_DCA,
+		PAPI_L1_DCM,
+		PAPI_L1_DCH,
+		PAPI_L2_DCA,
+		PAPI_L2_DCM,
+		PAPI_L2_DCH,
+#if 0
+		PAPI_L1_LDM,
+		PAPI_L1_STM,
+		PAPI_L1_DCR,
+		PAPI_L1_DCW,
+		PAPI_L1_ICM,
+		PAPI_L1_TCM,
+		PAPI_LD_INS,
+		PAPI_SR_INS,
+		PAPI_LST_INS,
+		PAPI_L2_DCR,
+		PAPI_L2_DCW,
+		PAPI_CSR_TOT,
+		PAPI_MEM_SCY,
+		PAPI_MEM_RCY,
+		PAPI_MEM_WCY,
+		PAPI_L1_ICH,
+		PAPI_L1_ICA,
+		PAPI_L1_ICR,
+		PAPI_L1_ICW,
+		PAPI_L1_TCH,
+		PAPI_L1_TCA,
+		PAPI_L1_TCR,
+		PAPI_L1_TCW,
+		PAPI_L2_DCM,
+		PAPI_L2_ICM,
+		PAPI_L2_TCM,
+		PAPI_L2_LDM,
+		PAPI_L2_STM,
+		PAPI_L2_DCH,
+		PAPI_L2_DCA,
+		PAPI_L2_DCR,
+		PAPI_L2_DCW,
+		PAPI_L2_ICH,
+		PAPI_L2_ICA,
+		PAPI_L2_ICR,
+		PAPI_L2_ICW,
+		PAPI_L2_TCH,
+		PAPI_L2_TCA,
+		PAPI_L2_TCR,
+		PAPI_L2_TCW,
+#endif
+		0
+	};
+
+	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
+
+	if ( ( retval =
+		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+        {
+          printf("Error in file: %s, line %d, method %s, return %d\n", 
+		 __FILE__, __LINE__, "PAPI_library_init", retval );
+        }
+
+
+	if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
+        {
+          printf("Error in file: %s, line %d, method %s, return %d\n", 
+		 __FILE__, __LINE__, "PAPI_create_eventset", retval );
+        }
+
+        check_cache_info();
 
 	for ( i = 0; eventlist[i] != 0; i++ ) {
 	        if (PAPI_event_code_to_name( eventlist[i], descr ) != PAPI_OK)
