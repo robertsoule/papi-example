@@ -15,7 +15,6 @@
 
 #include "papi.h"
 
-#define OUT_FMT		"%12d\t%12lld\t%12lld\t%.2f\n"
 
 int TESTS_QUIET = 0;
 
@@ -26,7 +25,7 @@ tests_quiet( int argc, char **argv )
 }
 
 int
-do_misses( int i, int j)
+do_misses( )
 {
   return 0;
 }
@@ -121,20 +120,23 @@ check_cache_info()
 int
 main( int argc, char **argv )
 {
-	int retval, i, j;
+
+        #define NUM_EVENTS 3
+
+	int retval, i;
 	int EventSet = PAPI_NULL;
-	long long values[2];
-	char descr[PAPI_MAX_STR_LEN];
-	PAPI_event_info_t evinfo;
+	long long values[NUM_EVENTS];
+	char descr[NUM_EVENTS][PAPI_MAX_STR_LEN];
+	PAPI_event_info_t evinfo[NUM_EVENTS];
 
 
-	const int eventlist[] = {
-		PAPI_L1_DCA,
+	int eventlist[] = {
+		// PAPI_L1_DCA,
 		PAPI_L1_DCM,
-		PAPI_L1_DCH,
+		// PAPI_L1_DCH,
 		PAPI_L2_DCA,
 		PAPI_L2_DCM,
-		PAPI_L2_DCH,
+		// PAPI_L2_DCH,
 #if 0
 		PAPI_L1_LDM,
 		PAPI_L1_STM,
@@ -182,8 +184,7 @@ main( int argc, char **argv )
 
 	tests_quiet( argc, argv );	/* Set TESTS_QUIET variable */
 
-	if ( ( retval =
-		   PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+	if ( ( retval = PAPI_library_init( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
         {
           printf("Error in file: %s, line %d, method %s, return %d\n", 
 		 __FILE__, __LINE__, "PAPI_library_init", retval );
@@ -196,70 +197,63 @@ main( int argc, char **argv )
 		 __FILE__, __LINE__, "PAPI_create_eventset", retval );
         }
 
-        check_cache_info();
+        if ( PAPI_add_events( EventSet, eventlist, NUM_EVENTS ) != PAPI_OK )
+        {
+          printf("Error in file: %s, line %d, method %s, return %d\n", 
+		 __FILE__, __LINE__, "PAPI_create_eventset", retval );
+        }
 
-	for ( i = 0; eventlist[i] != 0; i++ ) {
-	        if (PAPI_event_code_to_name( eventlist[i], descr ) != PAPI_OK)
+        // check_cache_info();
+
+        for ( i = 0; i< NUM_EVENTS; i++) {
+
+	        if (PAPI_event_code_to_name( eventlist[i], descr[i] ) != PAPI_OK)
 	           continue;
-		if ( PAPI_add_event( EventSet, eventlist[i] ) != PAPI_OK )
-		   continue;
 
-		if ( PAPI_get_event_info( eventlist[i], &evinfo ) != PAPI_OK )
+		if ( PAPI_get_event_info( eventlist[i], &evinfo[i] ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
 			__FILE__, __LINE__, "PAPI_get_event_info", retval );
 
-		if (!TESTS_QUIET) {
-			printf( "\nEvent: %s\nShort: %s\nLong: %s\n\n",
-				evinfo.symbol, evinfo.short_descr,
-				evinfo.long_descr );
-			printf( "       Bytes\t\tCold\t\tWarm\tPercent\n" );
-		}
+     }
+
 
 		if ( ( retval = PAPI_start( EventSet ) ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
 			 __FILE__, __LINE__, "PAPI_start", retval );
 
-		for ( j = 512; j <= 16 * ( 1024 * 1024 ); j = j * 2 ) {
-			do_misses( 1, j );
-			do_flush(  );
 
-			if ( ( retval = PAPI_reset( EventSet ) ) != PAPI_OK )
+	        do_misses( );
+	        do_flush(  );
+
+		if ( ( retval = PAPI_reset( EventSet ) ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
 				 __FILE__, __LINE__, "PAPI_reset", retval );
 
-			do_misses( 1, j );
+		do_misses( );
 
-			if ( ( retval = PAPI_read( EventSet, &values[0] ) ) != PAPI_OK )
-                        printf("Error in file: %s, line %d, method %s, return %d\n", 
-				 __FILE__, __LINE__, "PAPI_read", retval );
-			if ( ( retval = PAPI_reset( EventSet ) ) != PAPI_OK )
-                        printf("Error in file: %s, line %d, method %s, return %d\n", 
-				 __FILE__, __LINE__, "PAPI_reset", retval );
+		if ( ( retval = PAPI_read( EventSet, &values[0] ) ) != PAPI_OK )
+                printf("Error in file: %s, line %d, method %s, return %d\n", 
+		__FILE__, __LINE__, "PAPI_read", retval );
 
-			do_misses( 1, j );
+        for ( i = 0; i< NUM_EVENTS; i++) {
 
-			if ( ( retval = PAPI_read( EventSet, &values[1] ) ) != PAPI_OK )
-                        printf("Error in file: %s, line %d, method %s, return %d\n", 
-				 __FILE__, __LINE__, "PAPI_read", retval );
+                #define OUT_FMT		"%12d\t%12lld\n"
 
-			if (!TESTS_QUIET) {
-				printf( OUT_FMT, j,
-					values[0], values[1],
-					( ( float ) values[1] /
-					( float ) ( ( values[0] !=0 ) ?
-						values[0] : 1 ) * 100.0 ) );
-			}
+		if (!TESTS_QUIET) {
+		  printf( "%s %12lld\n", evinfo[i].symbol, values[i] ); 
+		// printf( OUT_FMT, j, values[i] ); 
+
 		}
+        }
 
 		if ( ( retval = PAPI_stop( EventSet, NULL ) ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
 			 __FILE__, __LINE__, "PAPI_stop", retval );
 
 		if ( ( retval =
-			   PAPI_remove_event( EventSet, eventlist[i] ) ) != PAPI_OK )
+			   PAPI_remove_events( EventSet, eventlist, NUM_EVENTS ) ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
 			 __FILE__, __LINE__, "PAPI_remove_event", retval );
-	}
 
 	if ( ( retval = PAPI_destroy_eventset( &EventSet ) ) != PAPI_OK )
                         printf("Error in file: %s, line %d, method %s, return %d\n", 
